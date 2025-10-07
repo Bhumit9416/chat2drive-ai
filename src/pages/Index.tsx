@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dashboard } from "@/components/Dashboard";
 import { ConfigPanel } from "@/components/ConfigPanel";
-import { Activity, Settings, FileText } from "lucide-react";
+import { Documentation } from "@/components/Documentation";
+import { Activity, Settings, FileText, BookOpen } from "lucide-react";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -29,7 +30,7 @@ const Index = () => {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8 bg-card/50 border border-border/50">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 mb-8 bg-card/50 border border-border/50">
             <TabsTrigger
               value="dashboard"
               className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -44,6 +45,13 @@ const Index = () => {
               <Settings className="h-4 w-4 mr-2" />
               Configuration
             </TabsTrigger>
+            <TabsTrigger
+              value="docs"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              <BookOpen className="h-4 w-4 mr-2" />
+              Docs
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-0">
@@ -52,6 +60,10 @@ const Index = () => {
 
           <TabsContent value="config" className="mt-0">
             <ConfigPanel />
+          </TabsContent>
+
+          <TabsContent value="docs" className="mt-0">
+            <Documentation />
           </TabsContent>
         </Tabs>
       </div>

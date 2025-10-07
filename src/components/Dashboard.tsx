@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Activity, FileText, Trash2, FolderInput, FileEdit, Upload } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CommandLog {
   id: string;
@@ -66,6 +68,61 @@ const getStatusBadge = (status: string) => {
 };
 
 export const Dashboard = () => {
+  const [logs, setLogs] = useState<CommandLog[]>([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    success: 0,
+    pending: 0,
+  });
+
+  useEffect(() => {
+    // Fetch initial logs
+    fetchLogs();
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('command_logs_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'command_logs',
+        },
+        () => {
+          fetchLogs();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchLogs = async () => {
+    const { data, error } = await supabase
+      .from('command_logs')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .limit(10);
+
+    if (!error && data) {
+      setLogs(data.map((log) => ({
+        id: log.id,
+        command: log.command,
+        status: log.status as "success" | "error" | "pending",
+        timestamp: log.timestamp,
+        details: log.details || '',
+      })));
+
+      // Calculate stats
+      const total = data.length;
+      const success = data.filter((l) => l.status === 'success').length;
+      const pending = data.filter((l) => l.status === 'pending').length;
+      setStats({ total, success, pending });
+    }
+  };
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -91,7 +148,7 @@ export const Dashboard = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Commands</p>
-              <h3 className="text-2xl font-bold">247</h3>
+              <h3 className="text-2xl font-bold">{stats.total}</h3>
             </div>
           </div>
         </Card>
@@ -102,8 +159,8 @@ export const Dashboard = () => {
               <FileText className="h-6 w-6 text-info" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Files Managed</p>
-              <h3 className="text-2xl font-bold">1.2k</h3>
+              <p className="text-sm text-muted-foreground">Successful</p>
+              <h3 className="text-2xl font-bold">{stats.success}</h3>
             </div>
           </div>
         </Card>
@@ -114,8 +171,8 @@ export const Dashboard = () => {
               <Upload className="h-6 w-6 text-warning" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Success Rate</p>
-              <h3 className="text-2xl font-bold">98.5%</h3>
+              <p className="text-sm text-muted-foreground">Pending</p>
+              <h3 className="text-2xl font-bold">{stats.pending}</h3>
             </div>
           </div>
         </Card>
@@ -125,7 +182,7 @@ export const Dashboard = () => {
         <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
         <ScrollArea className="h-[400px] pr-4">
           <div className="space-y-3">
-            {mockLogs.map((log) => (
+            {logs.map((log) => (
               <div
                 key={log.id}
                 className="p-4 rounded-lg bg-card/50 border border-border/30 animate-slide-up hover:border-primary/50 transition-colors"

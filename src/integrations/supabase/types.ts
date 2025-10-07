@@ -14,7 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      command_logs: {
+        Row: {
+          command: string
+          created_at: string
+          details: string | null
+          id: string
+          status: string
+          timestamp: string
+          user_phone: string | null
+        }
+        Insert: {
+          command: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          status: string
+          timestamp?: string
+          user_phone?: string | null
+        }
+        Update: {
+          command?: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          status?: string
+          timestamp?: string
+          user_phone?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
